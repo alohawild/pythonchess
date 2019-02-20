@@ -54,7 +54,7 @@ def random_move(my_board):
 
     # Now as we have no cool Pythonic means just loop until values match
     move_number = 0
-    my_move = chess.Move.null()
+
     for a_move in my_board.legal_moves:
         if my_random_move == move_number:
             my_move = a_move
@@ -62,6 +62,7 @@ def random_move(my_board):
         move_number = move_number + 1
 
     return my_move
+
 
 def uci_legal(my_board):
     """
@@ -72,13 +73,14 @@ def uci_legal(my_board):
     """
 
     my_uci = []
-    for a_move in board.legal_moves:
-        my_uci.append(board.uci(a_move))
+    for a_move in my_board.legal_moves:
+        my_uci.append(my_board.uci(a_move))
 
     return my_uci
 
 # =============================================================
 # Main program begins here
+
 
 if __name__ == "__main__":
 
@@ -100,7 +102,6 @@ if __name__ == "__main__":
         if board.is_check():
             print("Check!")
 
-        random_legal = chess.Move.null()
         random_legal = random_move(board)
         print("My move is ", random_legal)
         board.push(random_legal)
@@ -123,7 +124,7 @@ if __name__ == "__main__":
 
                 if your_move == "quit":
                     sys.exit(0)
-                if len(your_move) <4:
+                if len(your_move) < 4:
                     print("Invalid entry")
                     continue
 
