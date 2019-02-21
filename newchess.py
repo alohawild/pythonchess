@@ -16,7 +16,7 @@
 __author__ = 'michaelwild'
 __copyright__ = "Copyright (C) 2018 Michael Wild"
 __license__ = "Apache License, Version 2.0"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __credits__ = ["Michael Wild"]
 __maintainer__ = "Michael Wild"
 __email__ = "alohawild@mac.com"
@@ -26,42 +26,10 @@ __status__ = "Initial"
 import chess.pgn
 import chess.svg
 from secrets import randbelow
+import random
 import sys
 
 # ######################## shared ##############################
-
-
-def random_move(my_board):
-
-    """
-    Generate a random move from the available legal moves.
-    There is no iterator nor means to directly reference legal moves so
-    we do it this that I have found--this works.
-    Returns null move if no legal move
-    Generates an exception if no moves are legal
-
-    :param my_board: the current instance of the board game
-    :return: one random move from possible legal moves in uci
-    """
-    my_move = chess.Move.null()
-
-    # Get legal moves and select a random value
-    my_number = my_board.legal_moves.count()
-    if my_number < 1:
-        raise Exception('No valid move for random move')
-
-    my_random_move = randbelow(my_number)
-
-    # Now as we have no cool Pythonic means just loop until values match
-    move_number = 0
-
-    for a_move in my_board.legal_moves:
-        if my_random_move == move_number:
-            my_move = a_move
-            break
-        move_number = move_number + 1
-
-    return my_move
 
 
 def uci_legal(my_board):
@@ -101,8 +69,7 @@ if __name__ == "__main__":
             break
         if board.is_check():
             print("Check!")
-
-        random_legal = random_move(board)
+        random_legal = random.choice(list(board.legal_moves))
         print("My move is ", random_legal)
         board.push(random_legal)
         print("Board is now...")
