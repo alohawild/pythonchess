@@ -25,7 +25,6 @@ __status__ = "Initial"
 
 import chess.pgn
 import chess.svg
-from secrets import randbelow
 import random
 import sys
 
