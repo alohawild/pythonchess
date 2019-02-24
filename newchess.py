@@ -16,7 +16,7 @@
 __author__ = 'michaelwild'
 __copyright__ = "Copyright (C) 2018 Michael Wild"
 __license__ = "Apache License, Version 2.0"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __credits__ = ["Michael Wild"]
 __maintainer__ = "Michael Wild"
 __email__ = "alohawild@mac.com"
@@ -28,22 +28,6 @@ import chess.svg
 import random
 import sys
 
-# ######################## shared ##############################
-
-
-def uci_legal(my_board):
-    """
-    Creates a list of legal moves.
-    Returns null list if no moves.
-    :param my_board: the current instance of the board game
-    :return: list of UCI legal moves.
-    """
-
-    my_uci = []
-    for a_move in my_board.legal_moves:
-        my_uci.append(my_board.uci(a_move))
-
-    return my_uci
 
 # =============================================================
 # Main program begins here
@@ -81,9 +65,9 @@ if __name__ == "__main__":
             while True:
                 if board.is_check():
                     print("Check!")
-                legal_moves = uci_legal(board)
+                legal_moves = [board.uci(a_move) for a_move in list(board.legal_moves)]
                 print(legal_moves)
-                your_move = chess.Move.null()
+
                 print("Enter your move:")
                 print(" ")
                 your_move = input("? (quit to end)")
