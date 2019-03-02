@@ -16,7 +16,7 @@
 __author__ = 'michaelwild'
 __copyright__ = "Copyright (C) 2018 Michael Wild"
 __license__ = "Apache License, Version 2.0"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 __credits__ = ["Michael Wild"]
 __maintainer__ = "Michael Wild"
 __email__ = "alohawild@mac.com"
@@ -26,36 +26,6 @@ __status__ = "Initial"
 import chess.svg
 import random
 import sys
-
-#  These below are adjustable values for calculating value of moves
-CHESS_BOARD_VALUE = [0, 0, 1, 1, 1, 1, 0, 0,
-                     0, 2, 2, 2, 2, 2, 2, 0,
-                     1, 2, 3, 3, 3, 3, 2, 1,
-                     1, 2, 3, 4, 4, 3, 2, 1,
-                     1, 2, 3, 4, 4, 3, 2, 1,
-                     1, 2, 3, 3, 3, 3, 2, 1,
-                     0, 2, 2, 2, 2, 2, 2, 0,
-                     0, 0, 1, 1, 1, 1, 0, 0,
-                     ]
-
-CHESS_BOARD_KING  = [4, 4, 3, 3, 3, 3, 4, 4,
-                     4, 2, 2, 2, 2, 2, 2, 4,
-                     3, 2, 1, 1, 1, 1, 2, 3,
-                     3, 2, 1, 0, 0, 1, 2, 3,
-                     3, 2, 1, 0, 0, 1, 2, 3,
-                     3, 2, 1, 1, 1, 1, 2, 3,
-                     4, 2, 2, 2, 2, 2, 2, 4,
-                     4, 4, 3, 3, 3, 3, 4, 4,
-                     ]
-
-CHESS_POINTS = [0, 1, 3, 3, 5, 9, 100]  # None, "p", "n", "b", "r", "q", "k"
-
-RISK_FACTOR    = -1.0  # Loss of piece value
-BOARD_FACTOR   = 1.0  # Place on board value
-PIECE_FACTOR   = 1.0  # Value of pieces for exchange
-BOARD_KING     = 1.0  # Place on board value for King move
-SUPPORT_FACTOR = 1.0  # Value of interlocking support
-HOLD_FACTOR    = 0.5  # Value of hold attack loss
 
 # ######################## shared ##############################
 
@@ -75,6 +45,35 @@ class MoveList:
                     'Q'
                     'K']
 
+    #  These below are adjustable values for calculating value of moves
+    CHESS_BOARD_VALUE = [0, 0, 1, 1, 1, 1, 0, 0,
+                         0, 2, 2, 2, 2, 2, 2, 0,
+                         1, 2, 3, 3, 3, 3, 2, 1,
+                         1, 2, 3, 4, 4, 3, 2, 1,
+                         1, 2, 3, 4, 4, 3, 2, 1,
+                         1, 2, 3, 3, 3, 3, 2, 1,
+                         0, 2, 2, 2, 2, 2, 2, 0,
+                         0, 0, 1, 1, 1, 1, 0, 0,
+                         ]
+
+    CHESS_BOARD_KING = [4, 4, 3, 3, 3, 3, 4, 4,
+                        4, 2, 2, 2, 2, 2, 2, 4,
+                        3, 2, 1, 1, 1, 1, 2, 3,
+                        3, 2, 1, 0, 0, 1, 2, 3,
+                        3, 2, 1, 0, 0, 1, 2, 3,
+                        3, 2, 1, 1, 1, 1, 2, 3,
+                        4, 2, 2, 2, 2, 2, 2, 4,
+                        4, 4, 3, 3, 3, 3, 4, 4,
+                        ]
+
+    CHESS_POINTS = [0, 1, 3, 3, 5, 9, 100]  # None, "p", "n", "b", "r", "q", "k"
+
+    RISK_FACTOR = -1.0  # Loss of piece value
+    BOARD_FACTOR = 1.0  # Place on board value
+    PIECE_FACTOR = 1.0  # Value of pieces for exchange
+    BOARD_KING = 1.0  # Place on board value for King move
+    SUPPORT_FACTOR = 1.0  # Value of interlocking support
+    HOLD_FACTOR = 0.5  # Value of hold attack loss
 
     def __init__(self):
         """
@@ -85,7 +84,8 @@ class MoveList:
 
         return
 
-    def print_board(self, my_board):
+    @staticmethod
+    def print_board(my_board):
         """
         Just print board with a bit more display
         :param my_board:
@@ -102,7 +102,8 @@ class MoveList:
 
         return
 
-    def list_legal(self, my_board):
+    @staticmethod
+    def list_legal(my_board):
         """
         Get a list of legal moves and UCI descriptions
         :param my_board:
@@ -121,46 +122,60 @@ class MoveList:
         :return: list of moves with values broken into a list:
                     move [piece, color, from_square, to_square, is_attack, uci]
         """
-
         my_list = []
         for a_move in list(my_board.legal_moves):
-            from_square = a_move.from_square
-            to_square = a_move.to_square
-            our_piece = my_board.piece_at(from_square)
-            to_piece = my_board.piece_at(to_square)
-            attack = True
-            if to_piece is None:
-                attack = False
-            game_over, our_risk = self.check_risk(my_board, a_move)
-
-            our_hold, our_support = self.check_hold(my_board, a_move)
-
-            # Calculate value of move
-            our_move_calc = our_hold + our_support
-            # Force movement to favor the center, unless the King
-            if our_piece.symbol == "k":
-                our_move_calc = (CHESS_BOARD_KING[to_square] * BOARD_FACTOR) + our_move_calc
-            else:
-                our_move_calc = (CHESS_BOARD_VALUE[to_square] * BOARD_FACTOR) + our_move_calc
-            if attack:
-                our_move_calc = (CHESS_POINTS[to_piece.piece_type] * PIECE_FACTOR) + our_move_calc
-                if our_risk:
-                    our_move_calc = our_move_calc - (CHESS_POINTS[our_piece.piece_type] * PIECE_FACTOR)
-            else:
-                if our_risk:
-                    our_move_calc = (CHESS_POINTS[our_piece.piece_type] * RISK_FACTOR) + our_move_calc
-
-            if game_over:
-                our_move_calc = 1000.0
-
-            #  This would be better in a data frame or dictionary, but it works now
-            my_list.append([a_move, [our_piece, our_piece.color, from_square, to_square,
-                                     to_piece, attack, my_board.uci(a_move), game_over, our_risk,
-                                     our_move_calc, our_hold, our_support]])
+            my_list.append([a_move, self.eval_move(a_move, my_board)])
 
         return my_list
 
-    def best_from_list(self, my_list):
+    def eval_move(self, my_move, my_board):
+        """
+        This routine breaks apart a move and then evaluates it.
+        It looks one move ahead to determine positive and negative
+        actions. It does not do a min-max just a few checks.
+        :param my_move: the legal move to be evaluated
+        :param my_board: the board that the move is for
+        :return: a list of all the values calculated or extracted
+        """
+        assert my_move in my_board.legal_moves
+
+        from_square = my_move.from_square
+        to_square = my_move.to_square
+        our_piece = my_board.piece_at(from_square)
+        to_piece = my_board.piece_at(to_square)
+        the_uci = my_board.uci(my_move)
+        attack = True
+        if to_piece is None:
+            attack = False
+        game_over, our_risk = self.check_risk(my_board, my_move)
+
+        our_hold, our_support = self.check_hold(my_board, my_move)
+
+        # Calculate value of move
+        our_move_calc = our_hold + our_support
+        # Force movement to favor the center, unless the King
+        if our_piece.symbol == "k":
+            our_move_calc = (self.CHESS_BOARD_KING[to_square] * self.BOARD_FACTOR) + our_move_calc
+        else:
+            our_move_calc = (self.CHESS_BOARD_VALUE[to_square] * self.BOARD_FACTOR) + our_move_calc
+        if attack:
+            our_move_calc = (self.CHESS_POINTS[to_piece.piece_type] * self.PIECE_FACTOR) + our_move_calc
+            if our_risk:
+                our_move_calc = our_move_calc - (self.CHESS_POINTS[our_piece.piece_type] * self.PIECE_FACTOR)
+        else:
+            if our_risk:
+                our_move_calc = (self.CHESS_POINTS[our_piece.piece_type] * self.RISK_FACTOR) + our_move_calc
+
+        if game_over:
+            our_move_calc = 1000.0
+
+        #  send back a list
+        return [our_piece, our_piece.color, from_square, to_square, to_piece, attack,
+                the_uci, game_over, our_risk, our_move_calc, our_hold, our_support]
+
+
+    @staticmethod
+    def best_from_list(my_list):
         """
         Get the best move using calculation value.
         On tie supply last pawn move.
@@ -187,7 +202,8 @@ class MoveList:
         return my_move, score
 
 
-    def check_risk(self, my_board, my_move, verbose=False):
+    @staticmethod
+    def check_risk(my_board, my_move, verbose=False):
         """
         Take a move, create a new board, apply it, check what happens
         :param my_board: board to use
@@ -271,10 +287,10 @@ class MoveList:
                 my_hold = True
                 break
         if my_hold:
-            calc_hold = (CHESS_POINTS[try_piece.piece_type] * PIECE_FACTOR)
+            calc_hold = (self.CHESS_POINTS[try_piece.piece_type] * self.PIECE_FACTOR)
 
-        calc_support = calc_support * SUPPORT_FACTOR
-        calc_hold = calc_hold * HOLD_FACTOR
+        calc_support = calc_support * self.SUPPORT_FACTOR
+        calc_hold = calc_hold * self.HOLD_FACTOR
 
         if verbose:
             print("Move: ", my_move)
@@ -283,7 +299,8 @@ class MoveList:
 
         return calc_hold, calc_support
 
-    def print_legal(self, my_board, my_moves):
+    @staticmethod
+    def print_legal(my_board, my_moves):
         """
         Print out evaluated move list
         :param my_board: board in play
@@ -308,6 +325,10 @@ class MoveList:
             if risk:
                 print("----->Threatened")
         return
+
+
+# =============================================================
+# Main program begins here
 
 
 # =============================================================
