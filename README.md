@@ -11,3 +11,6 @@ The betterchess.py measures the value of moves by various factors and creates a 
 "best" move it in the list. The code looks forward about one move to check its settings. It also tries to cost not
 moving a piece. There is no exchange tree logic. Just looking at the board and playing various moves one step ahead.
 The first move is always random. This simulates an opening book, poorly but still better than always playing the same.
+### goodvalues.xml
+This file is used to hold the factors used to run the program. It reads it and writes it out each run. At this time it makes
+not changes to the values.
