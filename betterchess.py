@@ -16,7 +16,7 @@
 __author__ = 'michaelwild'
 __copyright__ = "Copyright (C) 2018 Michael Wild"
 __license__ = "Apache License, Version 2.0"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 __credits__ = ["Michael Wild"]
 __maintainer__ = "Michael Wild"
 __email__ = "alohawild@mac.com"
@@ -26,6 +26,8 @@ __status__ = "Initial"
 import chess.svg
 import random
 import sys
+import xml.etree.cElementTree as ET
+from xml.dom import minidom
 
 # ######################## shared ##############################
 
@@ -75,12 +77,20 @@ class MoveList:
     SUPPORT_FACTOR = 1.0  # Value of interlocking support
     HOLD_FACTOR = 0.5  # Value of hold attack loss
 
-    def __init__(self):
+    def __init__(self, my_file_name="goodvalues.xml"):
         """
-        This is placeholder for now
-        :param self:
-        :return:
+        Start up and try to load starting values
+        :param my_file_name: xml file that contains value
         """
+
+        xml_doc = minidom.parse(my_file_name)
+
+        self.RISK_FACTOR = int(xml_doc.getElementsByTagName('RISK_FACTOR')[0].attributes['name'].value) / 10000.0
+        self.BOARD_FACTOR = int(xml_doc.getElementsByTagName('BOARD_FACTOR')[0].attributes['name'].value) / 10000.0
+        self.BOARD_KING = int(xml_doc.getElementsByTagName('BOARD_KING')[0].attributes['name'].value) / 10000.0
+        self.PIECE_FACTOR = int(xml_doc.getElementsByTagName('PIECE_FACTOR')[0].attributes['name'].value) / 10000.0
+        self.SUPPORT_FACTOR = int(xml_doc.getElementsByTagName('SUPPORT_FACTOR')[0].attributes['name'].value) / 10000.0
+        self.HOLD_FACTOR = int(xml_doc.getElementsByTagName('HOLD_FACTOR')[0].attributes['name'].value) / 10000.0
 
         return
 
@@ -326,10 +336,32 @@ class MoveList:
                 print("----->Threatened")
         return
 
+    def save_values(self, my_file_name="goodvalues.xml"):
+        """
+        Copy truncated to int values for chess calculations to xml file
+        :param my_file_name: file name string
+        :return: N/A
+        """
 
-# =============================================================
-# Main program begins here
+        root = ET.Element("chess")
+        #doc = ET.SubElement(root, "values")
+        string_value = str(int(10000 * self.RISK_FACTOR))
+        ET.SubElement(root, "RISK_FACTOR", name=string_value).text = "Rick Factor"
+        string_value = str(int(10000 * self.BOARD_FACTOR))
+        ET.SubElement(root, "BOARD_FACTOR", name=string_value).text = "Board Factor"
+        string_value = str(int(10000 * self.BOARD_KING))
+        ET.SubElement(root, "BOARD_KING", name=string_value).text = "Board King"
+        string_value = str(int(10000 * self.PIECE_FACTOR))
+        ET.SubElement(root, "PIECE_FACTOR", name=string_value).text = "Piece Factor"
+        string_value = str(int(10000 * self.SUPPORT_FACTOR))
+        ET.SubElement(root, "SUPPORT_FACTOR", name=string_value).text = "Support Factor"
+        string_value = str(int(10000 * self.HOLD_FACTOR))
+        ET.SubElement(root, "HOLD_FACTOR", name=string_value).text = "HOLD Factor"
 
+        tree = ET.ElementTree(root)
+        tree.write(my_file_name)
+
+        return
 
 # =============================================================
 # Main program begins here
@@ -345,12 +377,16 @@ if __name__ == "__main__":
     chess.STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
     board = chess.Board()
-    moving = MoveList()
+    file_name = "goodvalues.xml"
+    moving = MoveList(file_name)
     get_random = True
+    quit_game = False
 
     while True:
         if board.is_game_over():
             print("Game over")
+            break
+        if quit_game:
             break
         if get_random:
             random_legal = random.choice(list(board.legal_moves))
@@ -379,7 +415,8 @@ if __name__ == "__main__":
                 your_move = input("? (quit to end)")
 
                 if your_move == "quit":
-                    sys.exit(0)
+                    quit_game = True
+                    break
                 if len(your_move) < 4:
                     print("Invalid entry")
                     continue
@@ -398,6 +435,9 @@ if __name__ == "__main__":
                 else:
                     print("Move not valid: ", your_move)
         get_random = False
+
+    # Save values to XML file
+    moving.save_values(file_name)
 
     print(board)
     print(" ")
